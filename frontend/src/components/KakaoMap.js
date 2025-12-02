@@ -1,28 +1,29 @@
 import React, { useEffect, useRef } from 'react';
 
 const KakaoMap = ({ bakeries, onMarkerClick }) => {
-  const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const markersRef = useRef([]);
-
-  console.log('====== 카카오맵 디버깅 ======');
-  console.log('API KEY:', process.env.REACT_APP_KAKAO_API_KEY);
+  const mapContainer = useRef(null);
+  const mapInstance = useRef(null);
+  const markers = useRef([]);
 
   useEffect(() => {
+    // 카카오맵 스크립트 로드
     const script = document.createElement('script');
-    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.REACT_APP_KAKAO_API_KEY}&autoload=false`;
+    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.REACT_APP_KAKAO_API_KEY}&autoload=false&libraries=services`;
     script.async = true;
-    document.head.appendChild(script);
 
     script.onload = () => {
-  console.log('카카오맵 스크립트 로드 성공!');
-  console.log('window.kakao:', window.kakao);
-  
-  window.kakao.maps.load(() => {
-    console.log('카카오맵 API 로드 완료!');
-    initializeMap();
-  });
-};
+      console.log('✅ 카카오맵 스크립트 로드 성공!');
+      window.kakao.maps.load(() => {
+        console.log('✅ 카카오맵 API 로드 완료!');
+        initMap();
+      });
+    };
+
+    script.onerror = () => {
+      console.error('❌ 카카오맵 스크립트 로드 실패');
+    };
+
+    document.head.appendChild(script);
 
     return () => {
       if (document.head.contains(script)) {
@@ -32,92 +33,78 @@ const KakaoMap = ({ bakeries, onMarkerClick }) => {
   }, []);
 
   useEffect(() => {
-    if (mapInstanceRef.current && bakeries.length > 0) {
-      updateMarkers();
+    if (mapInstance.current && bakeries.length > 0) {
+      addMarkers();
     }
   }, [bakeries]);
 
-  const initializeMap = () => {
-    const { kakao } = window;
-    if (!kakao || !kakao.maps) return;
-
-    const container = mapRef.current;
+  const initMap = () => {
+    const container = mapContainer.current;
     const options = {
-      center: new kakao.maps.LatLng(36.8151, 127.1139),
+      center: new window.kakao.maps.LatLng(36.8151, 127.1139),
       level: 5,
     };
 
-    const map = new kakao.maps.Map(container, options);
-    mapInstanceRef.current = map;
+    const map = new window.kakao.maps.Map(container, options);
+    mapInstance.current = map;
+    console.log('✅ 지도 생성 완료!');
 
     if (bakeries.length > 0) {
-      updateMarkers();
+      addMarkers();
     }
   };
 
-  const updateMarkers = () => {
-    const { kakao } = window;
-    if (!kakao || !kakao.maps || !mapInstanceRef.current) return;
+  const addMarkers = () => {
+    // 기존 마커 제거
+    markers.current.forEach(marker => marker.setMap(null));
+    markers.current = [];
 
-    markersRef.current.forEach((marker) => marker.setMap(null));
-    markersRef.current = [];
-
-    const bounds = new kakao.maps.LatLngBounds();
+    const bounds = new window.kakao.maps.LatLngBounds();
 
     bakeries.forEach((bakery) => {
-      const position = new kakao.maps.LatLng(
+      const position = new window.kakao.maps.LatLng(
         bakery.coordinates.lat,
         bakery.coordinates.lng
       );
 
-      const content = `
-        <div style="
-          background-color: #ff6b6b;
-          color: white;
-          padding: 8px 12px;
-          border-radius: 20px;
-          font-weight: bold;
-          font-size: 12px;
-          white-space: nowrap;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-          cursor: pointer;
-          text-align: center;
-        ">
-          🍞 ${bakery.name}
-        </div>
-      `;
-
-      const customOverlay = new kakao.maps.CustomOverlay({
+      const marker = new window.kakao.maps.Marker({
         position: position,
-        content: content,
-        yAnchor: 1.5,
+        map: mapInstance.current,
       });
 
-      customOverlay.setMap(mapInstanceRef.current);
+      // 마커 클릭 이벤트
+      window.kakao.maps.event.addListener(marker, 'click', () => {
+        if (onMarkerClick) {
+          onMarkerClick(bakery);
+        }
+      });
 
-      const overlayElement = customOverlay.a;
-      if (overlayElement) {
-        overlayElement.onclick = () => {
-          if (onMarkerClick) {
-            onMarkerClick(bakery);
-          }
-          mapInstanceRef.current.setCenter(position);
-          mapInstanceRef.current.setLevel(3);
-        };
-      }
+      // 인포윈도우
+      const infowindow = new window.kakao.maps.InfoWindow({
+        content: `<div style="padding:5px;font-size:12px;">🍞 ${bakery.name}</div>`
+      });
 
-      markersRef.current.push(customOverlay);
+      window.kakao.maps.event.addListener(marker, 'mouseover', () => {
+        infowindow.open(mapInstance.current, marker);
+      });
+
+      window.kakao.maps.event.addListener(marker, 'mouseout', () => {
+        infowindow.close();
+      });
+
+      markers.current.push(marker);
       bounds.extend(position);
     });
 
+    // 모든 마커가 보이도록 지도 범위 조정
     if (bakeries.length > 0) {
-      mapInstanceRef.current.setBounds(bounds);
+      mapInstance.current.setBounds(bounds);
     }
   };
 
   return (
     <div
-      ref={mapRef}
+      ref={mapContainer}
       style={{
         width: '100%',
         height: '100%',
