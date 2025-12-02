@@ -14,8 +14,12 @@ const PORT = process.env.PORT || 5000;
 
 // 미들웨어
 // CORS 설정 - 모든 출처 허용
+// CORS 설정
 app.use(cors({
-  origin: '*',  // 일단 모든 도메인 허용 (나중에 특정 도메인으로 제한 가능)
+  origin: [
+    'http://localhost:3000',
+    'https://cheonan-bakery-map.vercel.app'
+  ],
   credentials: true
 }));
 app.use(express.json());
