@@ -13,7 +13,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // 미들웨어
-app.use(cors());
+// CORS 설정 - 모든 출처 허용
+app.use(cors({
+  origin: '*',  // 일단 모든 도메인 허용 (나중에 특정 도메인으로 제한 가능)
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
