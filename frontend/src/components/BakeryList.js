@@ -12,6 +12,7 @@ const BakeryList = ({ bakeries, onBakeryClick, selectedBakery }) => {
           {bakeries.map((bakery) => (
             <div
               key={bakery._id}
+              id={`bakery-${bakery._id}`}
               className={`bakery-item ${selectedBakery?._id === bakery._id ? 'selected' : ''}`}
               onClick={() => onBakeryClick(bakery)}
             >

@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import NaverMap from '../components/KakaoMap';
+import React, { useState, useEffect, useRef } from 'react';
+import KakaoMap from '../components/KakaoMap';
 import BakeryList from '../components/BakeryList';
 import BakeryDetail from '../components/BakeryDetail';
 import { getAllBakeries } from '../api/bakeryApi';
 import './HomePage.css';
-import KakaoMap from '../components/KakaoMap';
 
 const HomePage = () => {
   const [bakeries, setBakeries] = useState([]);
   const [selectedBakery, setSelectedBakery] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [showList, setShowList] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const listRef = useRef(null);
 
   useEffect(() => {
     fetchBakeries();
@@ -22,9 +22,7 @@ const HomePage = () => {
       setLoading(true);
       const data = await getAllBakeries();
       setBakeries(data);
-      setError(null);
     } catch (err) {
-      setError('빵집 데이터를 불러오는데 실패했습니다.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -38,10 +36,23 @@ const HomePage = () => {
 
   const handleMarkerClick = (bakery) => {
     setSelectedBakery(bakery);
+    setShowList(true);
+    
+    // 목록이 열리면 해당 빵집으로 스크롤
+    setTimeout(() => {
+      const element = document.getElementById(`bakery-${bakery._id}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 300);
   };
 
   const handleCloseDetail = () => {
     setShowDetail(false);
+  };
+
+  const toggleList = () => {
+    setShowList(!showList);
   };
 
   if (loading) {
@@ -53,31 +64,35 @@ const HomePage = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="error-container">
-        <p>{error}</p>
-        <button onClick={fetchBakeries}>다시 시도</button>
-      </div>
-    );
-  }
-
   return (
     <div className="home-page">
       <header className="header">
-        <h1>🍞 천안 빵집 투어 지도</h1>
+        <h1>🍞 천안 빵집 투어</h1>
         <p>천안의 맛있는 빵집을 찾아보세요!</p>
       </header>
 
-      <div className="content">
-        <div className="map-section">
-          <KakaoMap
+      <div className="content-mobile">
+        {/* 지도 - 전체 화면 */}
+        <div className="map-full">
+          <KakaoMap 
             bakeries={bakeries} 
             onMarkerClick={handleMarkerClick}
           />
         </div>
 
-        <div className="list-section">
+        {/* 빵집 목록 열기 버튼 */}
+        <button 
+          className={`list-toggle-btn ${showList ? 'active' : ''}`}
+          onClick={toggleList}
+        >
+          {showList ? '✕ 닫기' : `📋 빵집 목록 (${bakeries.length})`}
+        </button>
+
+        {/* 슬라이드 업 패널 */}
+        <div className={`slide-panel ${showList ? 'open' : ''}`} ref={listRef}>
+          <div className="panel-handle" onClick={toggleList}>
+            <div className="handle-bar"></div>
+          </div>
           <BakeryList 
             bakeries={bakeries}
             onBakeryClick={handleBakeryClick}
