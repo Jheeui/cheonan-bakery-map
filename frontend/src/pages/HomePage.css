@@ -175,14 +175,14 @@
   }
   
   .content {
-    display: flex;
+    display: flex !important;  /* 👈 중요! */
   }
 }
 
 /* 모바일에서는 새 레이아웃 */
 @media (max-width: 768px) {
   .content {
-    display: none;
+    display: none !important;  /* 👈 중요! */
   }
   
   .content-mobile {

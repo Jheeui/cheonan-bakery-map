@@ -65,50 +65,65 @@ const HomePage = () => {
   }
 
   return (
-    <div className="home-page">
-      <header className="header">
-        <h1>🍞 천안 빵집 투어</h1>
-        <p>천안의 맛있는 빵집을 찾아보세요!</p>
-      </header>
+  <div className="home-page">
+    <header className="header">
+      <h1>🍞 천안 빵집 투어</h1>
+      <p>천안의 맛있는 빵집을 찾아보세요!</p>
+    </header>
 
-      <div className="content-mobile">
-        {/* 지도 - 전체 화면 */}
-        <div className="map-full">
-          <KakaoMap 
-            bakeries={bakeries} 
-            onMarkerClick={handleMarkerClick}
-          />
-        </div>
+    {/* 데스크톱/태블릿 레이아웃 */}
+    <div className="content">
+      <div className="map-section">
+        <KakaoMap 
+          bakeries={bakeries} 
+          onMarkerClick={handleBakeryClick}
+        />
+      </div>
+      <div className="list-section">
+        <BakeryList 
+          bakeries={bakeries}
+          onBakeryClick={handleBakeryClick}
+          selectedBakery={selectedBakery}
+        />
+      </div>
+    </div>
 
-        {/* 빵집 목록 열기 버튼 */}
-        <button 
-          className={`list-toggle-btn ${showList ? 'active' : ''}`}
-          onClick={toggleList}
-        >
-          {showList ? '✕ 닫기' : `📋 빵집 목록 (${bakeries.length})`}
-        </button>
-
-        {/* 슬라이드 업 패널 */}
-        <div className={`slide-panel ${showList ? 'open' : ''}`} ref={listRef}>
-          <div className="panel-handle" onClick={toggleList}>
-            <div className="handle-bar"></div>
-          </div>
-          <BakeryList 
-            bakeries={bakeries}
-            onBakeryClick={handleBakeryClick}
-            selectedBakery={selectedBakery}
-          />
-        </div>
+    {/* 모바일 레이아웃 */}
+    <div className="content-mobile">
+      <div className="map-full">
+        <KakaoMap 
+          bakeries={bakeries} 
+          onMarkerClick={handleMarkerClick}
+        />
       </div>
 
-      {showDetail && (
-        <BakeryDetail 
-          bakery={selectedBakery}
-          onClose={handleCloseDetail}
+      <button 
+        className={`list-toggle-btn ${showList ? 'active' : ''}`}
+        onClick={toggleList}
+      >
+        {showList ? '✕ 닫기' : `📋 빵집 목록 (${bakeries.length})`}
+      </button>
+
+      <div className={`slide-panel ${showList ? 'open' : ''}`} ref={listRef}>
+        <div className="panel-handle" onClick={toggleList}>
+          <div className="handle-bar"></div>
+        </div>
+        <BakeryList 
+          bakeries={bakeries}
+          onBakeryClick={handleBakeryClick}
+          selectedBakery={selectedBakery}
         />
-      )}
+      </div>
     </div>
-  );
+
+    {showDetail && (
+      <BakeryDetail 
+        bakery={selectedBakery}
+        onClose={handleCloseDetail}
+      />
+    )}
+  </div>
+);
 };
 
 export default HomePage;
